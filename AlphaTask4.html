@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Music Player</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #121212;
+            color: white;
+            margin: 0;
+        }
+
+        .player-container {
+            background: #181818;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+            width: 350px;
+            text-align: center;
+        }
+
+        .controls button {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: white;
+            cursor: pointer;
+            margin: 10px;
+        }
+
+        .seek-container, .volume-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        input[type=range] {
+            width: 100%;
+        }
+
+        .playlist li {
+            padding: 10px;
+            cursor: pointer;
+            background: #282828;
+            margin: 5px 0;
+            border-radius: 5px;
+            transition: 0.3s;
+        }
+        
+        .playlist li:hover, .active {
+            background: #1db954;
+        }
+    </style>
+</head>
+<body>
+    <div class="player-container">
+        <h2 id="track-title">Select a Song</h2>
+        <audio id="audio-player"></audio>
+        
+        <div class="seek-container">
+            <i class="fas fa-music"></i>
+            <input type="range" id="seek-bar" value="0">
+        </div>
+        
+        <div class="controls">
+            <button id="prev"><i class="fas fa-backward"></i></button>
+            <button id="play-pause"><i class="fas fa-play"></i></button>
+            <button id="next"><i class="fas fa-forward"></i></button>
+        </div>
+        
+        <div class="volume-container">
+            <i class="fas fa-volume-up"></i>
+            <input type="range" id="volume-control" min="0" max="1" step="0.1" value="0.5">
+        </div>
+        
+        <label>Speed: </label>
+        <select id="speed-control">
+            <option value="0.5">0.5x</option>
+            <option value="1" selected>1x</option>
+            <option value="1.5">1.5x</option>
+            <option value="2">2x</option>
+        </select>
+        
+        <h3>Playlist</h3>
+        <ul id="playlist" class="playlist"></ul>
+    </div>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let audioPlayer = document.getElementById("audio-player");
+            let trackTitle = document.getElementById("track-title");
+            let playPauseBtn = document.getElementById("play-pause");
+            let prevBtn = document.getElementById("prev");
+            let nextBtn = document.getElementById("next");
+            let seekBar = document.getElementById("seek-bar");
+            let volumeControl = document.getElementById("volume-control");
+            let speedControl = document.getElementById("speed-control");
+            let playlistEl = document.getElementById("playlist");
+
+            let songs = [
+                { name: "Sahar Ka Waqt Tha", path: "sahar ka waqt tha masoom kaliyan  Maula Ya Salli Wa Sallim  URDU LYRICS  Complete Video Naat.mp3" },
+                { name: "Assubhu Bada", path: "Usaid Zahid Siddique  Assubhu Bada  New Naat  Allah Hu Allah  Heera Gold.mp3" },
+                { name: "Kabay Ki Ronaq", path: "New Naat - Ghulam Mustafa Qadri - Kabay Ki Ronaq - Official Video - Heera Gold.mp3" },
+                { name: "La Ilaha Illallah", path: "La Ilaha Illallah - Anus Younus - Heera Gold.mp3.mp3" },
+                { name: "Humne Ankhon Se Dekha Nhi", path: "Humne Aankhon Se Dekha Nahi Hai Magar  Full Naat  Emotional Naat  Heart Touching Naat.mp3.mp3" }
+            ];
+
+            let currentSongIndex = 0;
+
+            function loadSong(index) {
+                let song = songs[index];
+                audioPlayer.src = song.path;
+                trackTitle.textContent = song.name;
+                highlightActiveSong(index);
+                audioPlayer.load();
+            }
+
+            function highlightActiveSong(index) {
+                let items = document.querySelectorAll("#playlist li");
+                items.forEach((item, i) => {
+                    item.classList.toggle("active", i === index);
+                });
+            }
+
+            function togglePlayPause() {
+                if (audioPlayer.paused) {
+                    audioPlayer.play();
+                    playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                } else {
+                    audioPlayer.pause();
+                    playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+                }
+            }
+
+            function nextSong() {
+                currentSongIndex = (currentSongIndex + 1) % songs.length;
+                loadSong(currentSongIndex);
+                audioPlayer.play();
+            }
+
+            function prevSong() {
+                currentSongIndex = (currentSongIndex - 1 + songs.length) % songs.length;
+                loadSong(currentSongIndex);
+                audioPlayer.play();
+            }
+
+            function updateSeekBar() {
+                seekBar.value = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+            }
+
+            function seekTo() {
+                let seekToTime = (seekBar.value / 100) * audioPlayer.duration;
+                audioPlayer.currentTime = seekToTime;
+            }
+
+            function adjustVolume() {
+                audioPlayer.volume = volumeControl.value;
+            }
+
+            function adjustSpeed() {
+                audioPlayer.playbackRate = speedControl.value;
+            }
+
+            function populatePlaylist() {
+                playlistEl.innerHTML = "";
+                songs.forEach((song, index) => {
+                    let li = document.createElement("li");
+                    li.textContent = song.name;
+                    li.addEventListener("click", function () {
+                        currentSongIndex = index;
+                        loadSong(index);
+                        audioPlayer.play();
+                    });
+                    playlistEl.appendChild(li);
+                });
+                highlightActiveSong(currentSongIndex);
+            }
+
+            playPauseBtn.addEventListener("click", togglePlayPause);
+            nextBtn.addEventListener("click", nextSong);
+            prevBtn.addEventListener("click", prevSong);
+            seekBar.addEventListener("input", seekTo);
+            volumeControl.addEventListener("input", adjustVolume);
+            speedControl.addEventListener("change", adjustSpeed);
+            audioPlayer.addEventListener("timeupdate", updateSeekBar);
+            audioPlayer.addEventListener("ended", nextSong);
+
+            populatePlaylist();
+            loadSong(currentSongIndex);
+        });
+    </script>
+</body>
+</html>
